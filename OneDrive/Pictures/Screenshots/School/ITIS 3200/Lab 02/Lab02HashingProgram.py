@@ -31,9 +31,10 @@ class HashRepository:
 
 class HashManager:
     "Organizes directory traversal and validation"
-    def __init__(self, hasher: FileHasher, repo:HashRepository):
+    def __init__(self, hasher: fileHasher, repo:HashRepository):
         self.hasher = hasher
         self.repo = repo
+        self.json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hash_table.json")
 
     def generate_new_table(self, directory_path):
         hash_table = {}
@@ -47,29 +48,31 @@ class HashManager:
         self.repo.save_table(hash_table, "hash_table.json")
         print ("Hash table generated to hash_table.json")
 
-        def validate_hashes(self, directory_path):
-            stored_hashes = self.repo.load_table("hash_table.json")
-            current_files = set()
+    def validate_hashes(self, directory_path):
+        stored_hashes = self.repo.load_table(self.json_path)
+        current_files = set()
 
-            for root, _, files in os.walk(directory_path):
-                for names in files:
-                    filepath = os.path.join(root, names)
-                    current_files.add(filepath)
-                    current_hash = self.hasher.hash_file(filepath)
+        for root, _, files in os.walk(directory_path):
+            for names in files:
+                filepath = os.path.join(root, names)
+                current_files.add(filepath)
+                current_hash = self.hasher.hash_file(filepath)
 
+                # FIX: Move this block forward one indentation level
                 if filepath not in stored_hashes:
                     print(f"NEW FILE: {filepath}")
                 elif current_hash == stored_hashes[filepath]:
                     print(f"VALID: {filepath}")
                 else:
                     print(f"INVALID (Modified): {filepath}")
-            
-            for stored_path in stored_hashes:
-                if stored_path not in current_files:
-                    print(f"DELETED: {stored_path}")
+        
+        # This remains outside the walk to check for things no longer present
+        for stored_path in stored_hashes:
+            if stored_path not in current_files:
+                print(f"DELETED: {stored_path}")
 
 def main():
-    manager = HashManager(FileHasher(), HashRepository())
+    manager = HashManager(fileHasher(), HashRepository())
     
     print("1. Generate New Hash Table")
     print("2. Verify Hashes")
